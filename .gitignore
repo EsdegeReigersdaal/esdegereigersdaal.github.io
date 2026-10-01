@@ -1,0 +1,14 @@
+/node_modules/
+/dist/
+/.cache/
+/coverage/
+/playwright-report/
+/test-results/
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.env
+.env.*
+!.env.example

@@ -1,0 +1,21 @@
+{
+  "name": "esdege-reigersdaal-architecture",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Public architecture diagrams for Esdege-Reigersdaal",
+  "type": "module",
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
+  "scripts": {
+    "dev": "likec4 start architecture --public public",
+    "validate": "likec4 validate architecture",
+    "build": "likec4 build architecture --output dist --public public",
+    "postbuild": "node scripts/finalize-site.mjs",
+    "preview": "likec4 preview --output dist",
+    "check:site": "node scripts/check-site.mjs"
+  },
+  "devDependencies": {
+    "likec4": "1.59.4"
+  }
+}

@@ -1,0 +1,138 @@
+model {
+
+    extend esdege.confluxdb_engineer {
+        confluxdb_sre = actor 'Site Reliability Engineer' {
+
+        }
+        confluxdb_de = actor 'Data Engineer' {
+
+        }
+    }
+    extend esdege.esdege_azure_cloud.confluxdb {
+
+        /*
+        Components
+        */
+        database = component 'Database' {
+            icon tech:postgresql
+            style {
+                shape storage
+                color red
+            }
+            description 'PostgreSQL Database'
+        }
+        aks_cluster = component 'AKS Cluster' {
+            icon azure:kubernetes-services
+            style {
+                color blue
+            }
+            description 'Hosts Dagster agents and Code Worker pods
+            '
+
+        }
+        azure_nat_gateway = component 'Azure NAT Gateway' {
+            icon azure:virtual-network-gateways
+            style {
+                color blue
+            }
+
+        }
+        azure_container_registry = component 'Azure Container Registry' {
+            description 'Hosts container images'
+            icon azure:container-registries
+        }
+
+        azure_key_vault = component 'Azure Key Vault' {
+            description 'Stores secrets'
+            icon azure:key-vaults
+
+        }
+        azure_bastion_jump_host = component 'Azure Bastion Jump Host' {
+            icon azure:bastions
+            style {
+                color blue
+            }
+            description 'Emergency access'
+        }
+
+        azure_monitor = component 'Azure Monitor' {
+            icon azure:monitor
+            style {
+                size small
+            }
+            description 'Collects metrics, logs and alerts across resource group'
+        }
+        network_security_groups = component 'Network Security Groups' {
+            icon azure:application-security-groups
+            style {
+                size small
+            }
+            description 'Manages and denies cross VNet traffic permitting only required east-west flows'
+        }
+        azure_private_dns_zone = component 'Azure Private DNS Zone' {
+            icon azure:dns-zones
+            style {
+                size small
+            }
+            description 'Hosts records for PostgreSQL, Key Vault and other private endpoints'
+        }
+        entra_id = component 'Microsoft Entra ID' {
+            icon azure:entra-managed-identities
+            description 'Authenticates users and applications'
+        }
+        /*
+        Internal connections
+        */
+
+        aks_cluster -> database 'Read & Write'
+        aks_cluster -> azure_container_registry 'Reads image from'
+        aks_cluster -> azure_nat_gateway 'Egresses to'
+
+
+
+        /*
+        External actors & Connections
+        */
+        confluxdb_sre -> github_repo 'Pushes code to'
+        confluxdb_de -> github_repo 'Pushes code to'
+        github_runner -> azure_container_registry 'Deploys image to'
+        github_runner -> azure_key_vault 'Retrieves runtime secrets from'
+        github_repo -> github_runner 'triggers'
+        confluxdb_de -> dagster_ui 'Controls Dagster Agent through'
+        azure_nat_gateway -> dagster_ui 'Polls Control Plane over HTTPS'
+        azure_nat_gateway -> external_data_sources 'Performs outbouund API calls to'
+
+        entra_id -> aks_cluster 'Authenticates'
+        entra_id -> github_runner 'Authenticates'
+
+        azure_nat_gateway -> esdege.data_warehouse 'Sends data to Data Warehouse'
+
+
+
+    }
+    github_repo = external 'Repository' {
+        icon tech:git
+        description 'Dagster Agent Repository
+                Code Worker Repository
+                IaC Repository
+                IaC Bootstrap repository
+            '
+        style {
+            color gray
+        }
+    }
+    github_runner = external 'Runner' {
+        icon tech:github
+        description 'Github Actions Runner'
+        style {
+            color gray
+        }
+    }
+
+    dagster_ui = external 'Dagster UI' {
+        style {
+            color gray
+        }
+
+    }
+}
