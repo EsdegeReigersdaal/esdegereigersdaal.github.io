@@ -1,0 +1,33 @@
+model {
+
+
+    esdege.planning_and_control -> data_warehouse 'Consumes and creates datasets from'
+    esdege.confluxdb_engineer -> confluxdb 'Maintains and expands dataplatform in'
+
+
+
+    extend esdege.esdege_azure_cloud {
+
+        confluxdb = system 'ConfluxDB Group' {
+            icon azure:resource-groups
+            style {
+                multiple true
+            }
+
+            description 'Managed by ConfluxDB Team'
+        }
+        data_warehouse = component 'Planning & Control Group' {
+            icon azure:resource-groups
+            description 'Managed by Planning & Control'
+        }
+
+        confluxdb -> data_warehouse 'Queries data from'
+        data_warehouse -> confluxdb ' Receives data from'
+    }
+
+
+    confluxdb -> external_data_sources 'Queries data from'
+    external_data_sources -> confluxdb 'Receives data from'
+
+}
+

@@ -1,0 +1,27 @@
+views {
+
+    view index of esdege {
+        title 'Landscape Diagram'
+        include *
+        exclude github_repo
+        exclude github_runner
+        exclude dagster_ui
+    }
+
+    view azure of esdege.esdege_azure_cloud {
+        title 'C1 Azure Cloud'
+        include *
+        exclude dagster_ui
+        exclude github_runner
+        exclude github_repo
+
+    }
+
+    view confluxdb of esdege.esdege_azure_cloud.confluxdb {
+        title 'C2 ConfluxDB Resource Group'
+        include *
+        include esdege.confluxdb_engineer
+        include github_repo
+    }
+
+}
