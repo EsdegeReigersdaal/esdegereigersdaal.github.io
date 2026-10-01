@@ -1,0 +1,32 @@
+specification {
+  element actor {
+    notation 'Esdege-Reigersdaal team'
+    style {
+      shape person
+      color sky
+    }
+  }
+  element organization {
+    style { color gray }
+  }
+  element system {
+    style { color blue }
+  }
+  element group {
+    notation 'Ownership boundary, not a single Azure resource'
+    style { color muted }
+  }
+  element service {
+    style { color blue }
+  }
+  element storage {
+    style {
+      shape storage
+      color green
+    }
+  }
+  element external {
+    notation 'Managed outside dataops-infrastructure'
+    style { color gray }
+  }
+}

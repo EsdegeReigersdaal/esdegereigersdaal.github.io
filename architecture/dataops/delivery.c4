@@ -1,0 +1,14 @@
+model {
+  github.infra_repo -> esdege.azure.platform.core.runners 'Manual releases, optional PR plans and scheduled power operations'
+  github.app_repo -> esdege.azure.platform.core.runners 'Builds and deploys user-code releases in separate runner pools'
+  esdege.azure.platform.core.runners -> esdege.entra 'GitHub OIDC to separate operation identities'
+  esdege.azure.platform.core.runners -> esdege.azure.platform.core.runner_vault 'Obtains scoped GitHub App credentials privately'
+  esdege.azure.platform.core.runners -> esdege.azure.platform.core.runner_registry 'Pulls the pinned runner image'
+  esdege.azure.platform.core.runners -> esdege.azure.platform.core.state 'Locks layer state; power identity accesses only its hold container'
+  esdege.azure.platform.core.runners -> esdege.azure.acr_tasks 'Submits archived source for builds, checks and scans'
+  esdege.azure.acr_tasks -> esdege.azure.platform.core.runner_registry 'Publishes validated runner images and SBOMs'
+  esdege.azure.acr_tasks -> esdege.azure.platform.etl.app_registry 'Publishes validated images, caches and OCI bundles'
+  esdege.azure.platform.core.runners -> esdege.azure.platform.etl.app_registry 'Publishes/selects release manifests and configuration bundles'
+  esdege.azure.platform.core.runners -> esdege.azure.platform.etl.aks 'Private API: Ansible, scoped Helm deployment, verification and power control'
+  esdege.azure.platform.core.runners -> esdege.azure.platform.etl.postgres 'Private database initialization and scheduled power control'
+}

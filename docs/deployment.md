@@ -19,8 +19,8 @@ JavaScript, and `assets/`. GitHub Pages was configured to publish `main` at `/`.
 3. In **Settings > Environments > github-pages**, allow deployments from `main`.
    Protect `main` with pull request review and the **Validate and build** status check.
 4. Merge the migration. Its push starts validation, build, artifact upload, and
-   deployment. Check the workflow's environment URL and open the landscape, Azure,
-   and ConfluxDB views, including a direct link to a view.
+   deployment. Check the workflow's environment URL and open the landscape,
+   ownership and production views, including a direct link to a view.
 5. Stop any external automation or manual process that copies generated files from
    `Esdege-documentatie` into this repository. Make subsequent diagram changes here.
 
@@ -28,9 +28,11 @@ Repository settings are a one-time administrator action; workflow files do not
 change the Pages publishing source. If the change has already been merged, switch
 the source and run **Actions > Documentation > Run workflow** on `main`.
 
-The source import contains the five `.c4` files and `C4.md` from the old repository's
-`confluxdb/data/` directory. File contents and view identifiers are preserved. Other
-documents and local edits in the old checkout are outside this diagram migration.
+The initial source import contained the five `.c4` files and `C4.md` from the old
+repository's `confluxdb/data/` directory. The subsequent
+[DataOps architecture refresh](dataops/C4.md) replaces that design and retains the
+`index`, `azure` and `confluxdb` view identifiers. Other documents and local edits
+in the old checkout were outside the diagram migration.
 The former unpinned Docker build is replaced by Node.js, a pinned LikeC4 version, and
 the npm lockfile. Older generated deployments remain available in Git history.
 

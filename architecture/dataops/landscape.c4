@@ -1,0 +1,59 @@
+// Reviewed 2026-10-01 against dataops-infrastructure master at
+// 7e504e32937621670d1c563258eff576fc17449c. See docs/dataops/C4.md for evidence.
+model {
+  esdege = organization 'Esdege-Reigersdaal' {
+    engineering = actor 'Data Engineering' {
+      description 'Maintains infrastructure, Dagster and data pipelines'
+    }
+    analytics = actor 'Planning & Control' {
+      description 'Uses published data for analysis and reporting'
+    }
+    departments = actor 'Other departments' {
+      description 'Request data products and business intelligence'
+    }
+    azure = system 'Azure - North Europe' {
+      icon tech:azure
+      platform = system 'DataOps production' {
+        description 'Production is the only active infrastructure environment. OpenTofu, Ansible and private CI runners operate the platform.'
+      }
+      acr_tasks = service 'ACR Tasks' {
+        description 'Azure-managed image builds, validation and scans; execution is outside the private runner environment'
+        icon azure:container-registries
+      }
+    }
+    fabric = external 'Microsoft Fabric' {
+      description 'Existing analytics workspaces, including ConfluxDB. Workspace identities read ADLS; capacity, workspaces and content are managed separately.'
+    }
+    entra = external 'Microsoft Entra ID' {
+      description 'User sign-in, GitHub OIDC and AKS workload identity. Application registrations are managed separately.'
+      icon azure:entra-managed-identities
+    }
+  }
+
+  sources = external 'Source systems' {
+    description 'External APIs, including SDB; pipelines initiate outbound requests'
+  }
+  github = external 'GitHub' {
+    icon tech:github
+    infra_repo = external 'dataops-infrastructure' {
+      description 'OpenTofu, Ansible and platform operations. Infrastructure and Ansible releases are manually dispatched from master.'
+    }
+    app_repo = external 'dataops-dagster' {
+      description 'User-code images and Helm releases. Successful master CI can trigger automatic application deployment.'
+    }
+    hosted_checks = external 'Hosted PR checks' {
+      description 'Static validation without Azure credentials. Optional same-repository infrastructure plans use private ACA runners.'
+    }
+  }
+  acme = external 'ACME certificate authority' {
+    description 'Lets Encrypt HTTP-01 validation and certificate renewal'
+  }
+
+  departments -> engineering 'Requests data products'
+  departments -> analytics 'Requests reporting'
+  analytics -> fabric 'Analyses published datasets'
+  engineering -> infra_repo 'Maintains and dispatches operations'
+  engineering -> app_repo 'Develops and releases pipelines'
+  infra_repo -> hosted_checks 'Validates pull requests'
+  app_repo -> hosted_checks 'Validates pull requests'
+}

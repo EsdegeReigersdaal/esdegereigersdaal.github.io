@@ -7,21 +7,36 @@ the architecture obscure.
 
 **Published diagrams:** <https://esdegereigersdaal.github.io/>
 
+The current model describes the DataOps production platform in Azure North Europe:
+self-hosted Dagster on private AKS, PostgreSQL for orchestration metadata, ADLS
+Gen2 and Azure Tables for data products, Fabric consumers, and private Container
+Apps runners with ACR Tasks for delivery. Production is the only active
+infrastructure environment.
+
+See the [architecture reference](docs/dataops/C4.md) for ownership, network access,
+delivery, the power schedule, recovery limits and dated source evidence. Reviewed
+on **1 October 2026** against `dataops-infrastructure` commit
+[`7e504e3`](https://github.com/EsdegeReigersdaal/dataops-infrastructure/commit/7e504e32937621670d1c563258eff576fc17449c).
+This is a documented snapshot, not a live Azure inventory.
+
 ## Repository layout
 
 | Path | Purpose |
 | --- | --- |
-| `architecture/confluxdb/` | LikeC4 specifications, models, relationships, and views |
-| [docs/confluxdb/C4.md](docs/confluxdb/C4.md) | Existing reference documentation for the diagrams |
+| `architecture/dataops/` | LikeC4 specifications, models, relationships, and views |
+| [docs/dataops/C4.md](docs/dataops/C4.md) | Current architecture and evidence references |
+| [docs/confluxdb/C4.md](docs/confluxdb/C4.md) | Compatibility link for the former reference path |
 | `public/` | Static publication assets, including the crawler policy |
 | `scripts/` | Publication asset preparation and build verification |
 | [.github/workflows/pages.yml](.github/workflows/pages.yml) | Pull request checks and GitHub Pages deployment |
 | `dist/` | Generated website; ignored by Git and uploaded as a Pages artifact |
 
-The diagram sources and their C4 reference document were imported unchanged from
+The original diagram sources and their C4 reference document were imported from
 `confluxdb/data/` in `EsdegeReigersdaal/Esdege-documentatie`, at commit
-`f8e8b2ecf0140153ad0d24831bbd1e1278744004`. Future diagram changes belong here.
-The build uses only this checkout and its locked npm dependencies.
+`f8e8b2ecf0140153ad0d24831bbd1e1278744004`. The DataOps model supersedes that
+design while retaining the published `index`, `azure` and `confluxdb` view URLs.
+Future diagram changes belong here. The build uses only this checkout and its
+locked npm dependencies; it does not need access to private infrastructure sources.
 
 ## Work locally
 
