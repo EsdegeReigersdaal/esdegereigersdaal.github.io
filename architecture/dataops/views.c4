@@ -1,0 +1,62 @@
+views {
+  // Retain the three published route identifiers, including /view/confluxdb/.
+  view index of esdege {
+    title 'DataOps landscape'
+    description 'Production architecture reviewed 1 October 2026. DataOps processes source data; separately managed Fabric workspaces consume its publications.'
+    include engineering, analytics, departments, platform, esdege.fabric, sources
+    exclude platform.etl.monitor -> engineering
+    exclude platform.dw -> esdege.fabric
+    include engineering -> platform with { title 'Operates the data platform' }
+    include platform -> sources with { title 'Retrieves source data' }
+    include esdege.fabric -> platform with { title 'Reads published data' }
+    autoLayout LeftRight
+  }
+
+  view azure of esdege.azure.platform {
+    title 'C1 - Platform ownership'
+    description 'Production in North Europe. Core, Network and ETL own infrastructure; DW retains external Fabric metadata only. Ansible owns workload configuration.'
+    include core, network, etl, dw, esdege.fabric, github.infra_repo, github.app_repo
+    exclude etl.aks -> network.platform_vnet
+    include core -> etl with { title 'Deploys and operates workloads' }
+    autoLayout LeftRight
+  }
+
+  view confluxdb of esdege.azure.platform {
+    title 'C2 - DataOps production'
+    description 'Current platform at the original ConfluxDB diagram URL. Dagster is self-hosted; PostgreSQL holds orchestration metadata and the storage account holds data products.'
+    include aks, postgres, lake, etl_vault, app_registry, monitor, runners, esdege.fabric, sources, esdege.engineering
+    exclude monitor -> esdege.engineering
+    include aks -> postgres with { title 'Stores orchestration metadata' }
+    include aks -> lake with { title 'Publishes data products' }
+    include aks -> etl_vault with { title 'Uses runtime secrets and TLS material' }
+    autoLayout LeftRight
+  }
+
+  view dagster of esdege.azure.platform.etl.aks {
+    title 'C3 - Dagster runtime'
+    description 'NGINX, oauth2-proxy, webserver and daemon run in dagster-system. User code and Jobs run in dagster-code. The control services and code server use the Dagster pool; run Jobs use the codeworker pool.'
+    include esdege.engineering, ingress, oauth, webserver, daemon, code, jobs, esdege.azure.platform.etl.postgres, esdege.entra
+    autoLayout LeftRight
+  }
+
+  view data of esdege.azure.platform.etl.lake {
+    title 'Data products and Fabric'
+    description 'Native Tables and ADLS files are distinct publications. Fabric reads ADLS, including Delta tables through shortcuts; Blob access does not grant native Table access.'
+    include sources, esdege.azure.platform.etl.aks.jobs, files, tables, esdege.fabric, esdege.analytics, esdege.azure.platform.etl.etl_vault
+    autoLayout LeftRight
+  }
+
+  view delivery of esdege.azure.platform.core {
+    title 'Build and delivery'
+    description 'Hosted PR checks have no Azure credentials. Private ACA runners execute privileged work with OIDC; ACR Tasks performs builds. Infrastructure/Ansible releases are manual; application delivery can follow successful master CI.'
+    include github.infra_repo, github.app_repo, github.hosted_checks, runners, esdege.azure.acr_tasks, runner_registry, esdege.azure.platform.etl.app_registry, state, runner_vault, esdege.azure.platform.etl.aks
+    autoLayout LeftRight
+  }
+
+  view networking of esdege.azure.platform.network {
+    title 'Network and access'
+    description 'Private AKS API and peered runner/platform networks. PostgreSQL uses a delegated subnet; storage and vaults use private endpoints. NGINX is public with TLS, source filtering and Entra sign-in. Registries remain authenticated public endpoints.'
+    include esdege.engineering, esdege.azure.platform.etl.aks.ingress, esdege.azure.platform.etl.aks.oauth, esdege.entra, acme, esdege.azure.platform.core.runners, platform_vnet, private_dns, esdege.azure.platform.etl.postgres, esdege.azure.platform.core.state, esdege.azure.platform.etl.etl_vault
+    autoLayout LeftRight
+  }
+}

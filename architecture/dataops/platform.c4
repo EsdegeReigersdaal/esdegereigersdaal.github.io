@@ -1,0 +1,82 @@
+model {
+  extend esdege.azure.platform {
+    core = group 'Core - state and CI' {
+      description 'Owns state, CI identities, grants and runners across the IaC and runner resource groups'
+      runners = service 'Private ACA runners' {
+        icon azure:container-apps-environments
+        description 'Ephemeral Container Apps Jobs for infrastructure operations, Dagster deployment and isolated application builds; scale to zero'
+      }
+      runner_registry = storage 'Runner registry' {
+        icon azure:container-registries
+        description 'Basic ACR; authenticated public endpoint; pinned runner images, caches and SBOMs'
+      }
+      runner_vault = service 'Runner Key Vault' {
+        icon azure:key-vaults
+        description 'GitHub App keys; private endpoint with a temporary operator firewall exception'
+      }
+      state = storage 'OpenTofu state' {
+        icon azure:storage-accounts
+        description 'Private ZRS Blob storage; versioning and 30-day soft deletion. Power holds use a separate container in this account.'
+      }
+    }
+    network = group 'Network' {
+      description 'Platform VNet, delegated subnets, peering and private DNS; the runner VNet is owned by Core'
+      platform_vnet = service 'Platform VNet' {
+        icon azure:virtual-networks
+        description 'AKS system and workload subnets, PostgreSQL delegated subnet and private endpoint subnet'
+      }
+      private_dns = service 'Private DNS' {
+        icon azure:dns-zones
+        description 'AKS, PostgreSQL, Key Vault, Blob, DFS and Table resolution for platform and runner networks; runner zones include mirrored lake/vault records'
+      }
+    }
+    etl = group 'ETL - production workloads' {
+      description 'Owns AKS, PostgreSQL, application registry, secrets, data storage and existing alerts'
+      aks = system 'Private AKS' {
+        icon azure:kubernetes-services
+        description 'Private API, Entra RBAC and workload identity. System pool: 1 node; Dagster pool: 1-3; run pool: 0-3. Compute follows the power schedule.'
+      }
+      postgres = storage 'Dagster PostgreSQL' {
+        icon tech:postgresql
+        description 'PostgreSQL 16 Flexible Server for Dagster metadata; delegated private subnet, 14-day backups, no HA or geo-redundant backup configured'
+      }
+      lake = storage 'Production data storage' {
+        icon azure:storage-accounts
+        description 'One LRS storage account: ADLS Gen2 files and native Azure Tables; Entra authentication, private endpoints and explicit public access exceptions'
+        files = storage 'ADLS Gen2' {
+          description 'raw, curated and shared filesystems. Parquet snapshots and Delta publications. Runtime writes and Fabric reads are account-wide grants.'
+        }
+        tables = storage 'Azure Tables' {
+          description 'SdbDutyState and SdbNachtdienstAuth; separate private Table endpoint and per-table runtime contributor grants'
+        }
+      }
+      etl_vault = service 'ETL Key Vault' {
+        icon azure:key-vaults
+        description 'Runtime credentials, TLS material and the SSO cookie secret; private endpoint and temporary operator IP exceptions'
+      }
+      app_registry = storage 'Dagster registry' {
+        icon azure:container-registries
+        description 'Basic ACR; authenticated public endpoint; control/user-code images, OCI release/configuration bundles, caches and SBOMs'
+      }
+      monitor = service 'Azure Monitor alerts' {
+        icon azure:monitor
+        description 'PostgreSQL metrics and AKS/PostgreSQL resource-health alerts; no centralized application log ingestion is configured'
+      }
+    }
+    dw = group 'DW compatibility state' {
+      description 'Existing Fabric capacity ID metadata only; no capacity, workspace or administrator lifecycle management'
+    }
+  }
+
+  core -> network 'Provides runner network and deployment identities'
+  network -> etl 'Provides subnets, peering and DNS'
+  dw -> esdege.fabric 'References existing capacity metadata'
+  core.runners -> network.platform_vnet 'Private VNet peering'
+  network.platform_vnet -> network.private_dns 'Resolves private service names'
+  core.runners -> network.private_dns 'Resolves private endpoints and AKS API'
+  etl.aks -> network.platform_vnet 'Runs in system and workload subnets'
+  etl.aks -> etl.app_registry 'Pulls pinned images over authenticated HTTPS'
+  etl.monitor -> etl.postgres 'Evaluates metric and health signals'
+  etl.monitor -> etl.aks 'Evaluates resource health'
+  etl.monitor -> esdege.engineering 'Sends operational alerts'
+}

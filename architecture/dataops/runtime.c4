@@ -1,0 +1,43 @@
+model {
+  extend esdege.azure.platform.etl.aks {
+    ingress = service 'NGINX ingress' {
+      icon tech:nginx
+      description 'Only public application ingress: TLS and source-IP allowlist on HTTPS; HTTP serves ACME challenges only; retired API returns 410'
+    }
+    oauth = service 'oauth2-proxy' {
+      description 'Internal Entra sign-in and Data-Engineering group authorization; federation is active'
+    }
+    webserver = service 'Dagster webserver' {
+      description 'Self-hosted UI/API in dagster-system; internal ClusterIP service'
+    }
+    daemon = service 'Dagster daemon' {
+      description 'Self-hosted schedules, sensors and queued run coordination; launches Kubernetes Jobs during the processing window'
+    }
+    code = service 'User-code server' {
+      description 'dataops-dagster definitions over internal gRPC; dagster-code namespace, resident Dagster pool; released separately by the application repository'
+    }
+    jobs = service 'Run and step pods' {
+      description 'Data pipelines in dagster-code with workload identity; run Jobs use the codeworker pool, which scales from zero to three nodes'
+    }
+  }
+
+  esdege.engineering -> ingress 'Opens Dagster over allowed HTTPS'
+  ingress -> oauth 'Forwards protected UI/API requests'
+  oauth -> esdege.entra 'Authenticates users and checks group membership'
+  oauth -> webserver 'Forwards authorized requests'
+  acme -> ingress 'Validates HTTP-01 challenges on port 80'
+  ingress -> esdege.azure.platform.etl.etl_vault 'Uses TLS material synchronized by CSI'
+  oauth -> esdege.azure.platform.etl.etl_vault 'Uses the synchronized cookie secret'
+  webserver -> code 'Loads definitions over gRPC'
+  daemon -> code 'Evaluates schedules and sensors over gRPC'
+  webserver -> esdege.azure.platform.etl.postgres 'Reads/writes Dagster metadata with workload identity'
+  daemon -> esdege.azure.platform.etl.postgres 'Coordinates runs with workload identity'
+  daemon -> jobs 'Launches Kubernetes run Jobs'
+  jobs -> esdege.azure.platform.etl.postgres 'Persists run and event metadata with workload identity'
+  jobs -> esdege.entra 'Exchanges projected workload tokens'
+  jobs -> sources 'Calls source APIs via AKS load-balancer egress'
+  jobs -> esdege.azure.platform.etl.etl_vault 'Reads approved runtime secrets over private access'
+  jobs -> esdege.azure.platform.etl.lake.files 'Writes extracts, snapshots and Delta publications'
+  jobs -> esdege.azure.platform.etl.lake.tables 'Publishes current state with per-table grants'
+  esdege.fabric -> esdege.azure.platform.etl.lake.files 'Reads via workspace identities and trusted workspace rules'
+}
