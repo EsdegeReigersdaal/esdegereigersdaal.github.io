@@ -16,6 +16,6 @@
     "check:site": "node scripts/check-site.mjs"
   },
   "devDependencies": {
-    "likec4": "1.59.4"
+    "likec4": "1.60.0"
   }
 }
